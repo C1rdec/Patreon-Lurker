@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33723.286
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lurker.Patreon", "src\Lurker.Patreon\Lurker.Patreon.csproj", "{89B1FC44-41FD-49D8-907F-C97CA8958AFD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lurkey.Patreon.Console", "src\Lurkey.Patreon.Console\Lurkey.Patreon.Console.csproj", "{08195042-C822-492E-A141-BE093CD0C150}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{89B1FC44-41FD-49D8-907F-C97CA8958AFD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{89B1FC44-41FD-49D8-907F-C97CA8958AFD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{89B1FC44-41FD-49D8-907F-C97CA8958AFD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{89B1FC44-41FD-49D8-907F-C97CA8958AFD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{08195042-C822-492E-A141-BE093CD0C150}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{08195042-C822-492E-A141-BE093CD0C150}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{08195042-C822-492E-A141-BE093CD0C150}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{08195042-C822-492E-A141-BE093CD0C150}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {DA71AD1A-DD34-4768-B0D7-4B87936025E9}
+	EndGlobalSection
+EndGlobal
