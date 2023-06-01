@@ -94,7 +94,7 @@ namespace Lurker.Patreon
             GC.SuppressFinalize(this);
         }
 
-        protected virtual string SuccessHtml => "<h1>Happy lurking</h1><span>You can close this window</span>";
+        protected virtual string SuccessHtml => "<div style='text-align: center;'><h1>Happy lurking</h1><span>You can close this window</span><div>";
 
         protected virtual void Dispose(bool disposing)
         {
