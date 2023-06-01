@@ -72,9 +72,12 @@ namespace Lurker.Patreon
         {
             var json = await Get("https://www.patreon.com/api/oauth2/api/current_user", token);
             var document = JsonDocument.Parse(json);
-            var included = document.RootElement.GetProperty("included");
+            if (document.RootElement.TryGetProperty("included", out var included))
+            {
+                return included.EnumerateArray().Any(e => e.GetProperty("type").GetString() == "campaign" && e.GetProperty("id").GetString() == campaignId);
+            }
 
-            return included.EnumerateArray().Any(e => e.GetProperty("type").GetString() == "campaign" && e.GetProperty("id").GetString() == campaignId);
+            return false;
         }
 
         public async Task<string> GetPatronId(string token)
@@ -115,6 +118,7 @@ namespace Lurker.Patreon
                 new KeyValuePair<string, string>("code", code),
                 new KeyValuePair<string, string>("redirect_uri", redirectUrl),
                 new KeyValuePair<string, string>("client_id", _clientId),
+                new KeyValuePair<string, string>("client_secret", "invalid"),
             };
 
             using var content = new FormUrlEncodedContent(values);
