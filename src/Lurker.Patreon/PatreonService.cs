@@ -1,9 +1,11 @@
 ﻿using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Headers;
+using System.Net.Sockets;
 using System.Security.Authentication;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Lurker.Patreon
 {
@@ -12,11 +14,18 @@ namespace Lurker.Patreon
         private readonly HttpClient _client;
         private readonly int[] _ports;
         private readonly string _clientId;
+        private readonly string _whiteListUrl;
 
         public PatreonService(int[] ports, string clientId)
+            : this(ports, clientId, null)
+        {
+        }
+
+        public PatreonService(int[] ports, string clientId, string whiteListUrl)
         {
             _ports = ports;
             _clientId = clientId;
+            _whiteListUrl = whiteListUrl;
             _client = new HttpClient();
         }
 
@@ -32,8 +41,20 @@ namespace Lurker.Patreon
 
             foreach (var port in _ports) 
             {
-                var http = new HttpListener();
                 var redirectUrl = GetRedirectUrl(port);
+
+                try
+                {
+                    var tcpListener = new TcpListener(IPAddress.Loopback, port);
+                    tcpListener.Start();
+                    tcpListener.Stop();
+                }
+                catch
+                {
+                    continue;
+                }
+
+                var http = new HttpListener();
                 http.Prefixes.Add(redirectUrl);
                 http.Start();
 
@@ -71,18 +92,41 @@ namespace Lurker.Patreon
         public async Task<bool> IsPledging(string campaignId, string token)
         {
             var json = await Get("https://www.patreon.com/api/oauth2/api/current_user", token);
+            if (string.IsNullOrEmpty(json))
+            {
+                return false;
+            }
+
             var document = JsonDocument.Parse(json);
             if (document.RootElement.TryGetProperty("included", out var included))
             {
-                return included.EnumerateArray().Any(e => e.GetProperty("type").GetString() == "campaign" && e.GetProperty("id").GetString() == campaignId);
+                var isPatron =  included.EnumerateArray().Any(e => e.GetProperty("type").GetString() == "campaign" && e.GetProperty("id").GetString() == campaignId);
+                if (isPatron)
+                {
+                    return isPatron;
+                }
             }
 
-            return false;
+            if (string.IsNullOrEmpty(_whiteListUrl))
+            {
+                return false;
+            }
+
+            var whiteList = await Get($@"{_whiteListUrl}?{Guid.NewGuid()}");
+            var patrons = whiteList.Trim().Split(';');
+            var patronId = document.RootElement.GetProperty("data").GetProperty("id").GetString();
+
+            return patrons.Any(p => p == patronId);
         }
 
         public async Task<string> GetPatronId(string token)
         {
             var json = await Get("https://www.patreon.com/api/oauth2/api/current_user", token);
+            if (string.IsNullOrEmpty(json))
+            {
+                return string.Empty;    
+            }
+
             var document = JsonDocument.Parse(json);
 
             return document.RootElement.GetProperty("data").GetProperty("id").GetString();
@@ -161,6 +205,9 @@ namespace Lurker.Patreon
             throw new AuthenticationException();
         }
 
+        private Task<string> Get(string url)
+            => Get(url, null);
+
         private async Task<string> Get(string url, string accessToken)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, url);
@@ -171,6 +218,12 @@ namespace Lurker.Patreon
             }
 
             var response = await _client.SendAsync(request);
+
+            if (!response.IsSuccessStatusCode) 
+            {
+                return string.Empty;
+            }
+
             return await response.Content.ReadAsStringAsync();
         }
     }
