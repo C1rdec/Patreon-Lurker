@@ -1,7 +1,13 @@
 ﻿using Lurker.Patreon;
+using Lurker.Patreon.Models;
 
-using var service = new PatreonService(new int[] { 8080, 8181, 8282 }, "<ClientId>");
+var credential = new PatreonApiCredential
+{
+    ClientId = "<ClientId>",
+    Ports = [8080, 8181, 8282]
+};
 
-var tokenResult = await service.GetAccessTokenAsync();
+var service = new PatreonService(credential);
+await service.LoginAsync();
 
-await service.IsPledging("<CampaignId>", tokenResult.AccessToken);
+var isPledged = await service.CheckPledgeStatusAsync("<CampaignId>");
