@@ -31,11 +31,11 @@ internal class PatreonApiHandler : IDisposable
     public Task<TokenResult> GetAccessTokenAsync()
         => GetAccessTokenAsync(null);
 
-    public async Task<TokenResult> GetAccessTokenAsync(TokenResult tokenResult)
+    public async Task<TokenResult> GetAccessTokenAsync(string refreshToken)
     {
-        if (tokenResult != null)
+        if (!string.IsNullOrEmpty(refreshToken))
         {
-            return await RefreshTokens(tokenResult);
+            return await RefreshTokens(refreshToken);
         }
 
         foreach (var port in _ports) 
@@ -179,7 +179,7 @@ internal class PatreonApiHandler : IDisposable
         }
     }
 
-    private async Task<TokenResult> RefreshTokens(TokenResult oldToken)
+    private async Task<TokenResult> RefreshTokens(string refreshToken)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, "https://www.patreon.com/api/oauth2/token");
 
@@ -187,7 +187,7 @@ internal class PatreonApiHandler : IDisposable
         var values = new[]
         {
             new KeyValuePair<string, string>("grant_type", "refresh_token"),
-            new KeyValuePair<string, string>("refresh_token", oldToken.RefreshToken),
+            new KeyValuePair<string, string>("refresh_token", refreshToken),
             new KeyValuePair<string, string>("client_id", _clientId),
         };
 

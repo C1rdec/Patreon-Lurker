@@ -45,11 +45,15 @@ public class PatreonService
     public async Task LoginAsync()
     {
         using var service = CreateService();
-        var tokenResult = await service.GetAccessTokenAsync();
+        var accessToken = _patreonFile.Entity?.AccessToken;
+        if (DateTime.Compare(_patreonFile.Entity.ExpiredDate, DateTime.UtcNow) < 0)
+        {
+            var tokenResult = await service.GetAccessTokenAsync(_patreonFile.Entity?.RefreshToken);
+            _patreonFile.Save(PatreonToken.FromTokenResult(tokenResult));
+            accessToken = tokenResult.AccessToken;
+        }
 
-        _patreonFile.Save(PatreonToken.FromTokenResult(tokenResult));
-
-        _patreonId = await service.GetPatronId(tokenResult.AccessToken);
+        _patreonId = await service.GetPatronId(accessToken);
     }
 
     public async Task<bool> CheckPledgeStatusAsync(string campaignId)
