@@ -10,6 +10,8 @@ namespace Lurker.Patreon;
 
 internal class PatreonApiHandler : IDisposable
 {
+    public static readonly string DefaultSuccessHtml = "<body style='background-color: dimgray;'><div style='text-align: center;color: lightgray;'><h1>Happy lurking</h1><span>You can close this window</span><div></body>";
+
     private readonly HttpClient _client;
     private readonly int[] _ports;
     private readonly string _clientId;
@@ -40,7 +42,6 @@ internal class PatreonApiHandler : IDisposable
 
         foreach (var port in _ports) 
         {
-            var redirectUrl = GetRedirectUrl(port);
 
             try
             {
@@ -52,7 +53,7 @@ internal class PatreonApiHandler : IDisposable
             {
                 continue;
             }
-
+            var redirectUrl = GetRedirectUrl(port);
             var http = new HttpListener();
             http.Prefixes.Add(redirectUrl);
             http.Start();
@@ -137,7 +138,7 @@ internal class PatreonApiHandler : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    protected virtual string SuccessHtml => "<div style='text-align: center;'><h1>Happy lurking</h1><span>You can close this window</span><div>";
+    protected virtual string SuccessHtml => DefaultSuccessHtml;
 
     protected virtual void Dispose(bool disposing)
     {
