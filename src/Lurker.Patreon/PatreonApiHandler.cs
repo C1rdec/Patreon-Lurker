@@ -15,17 +15,19 @@ internal class PatreonApiHandler : IDisposable
     private readonly HttpClient _client;
     private readonly int[] _ports;
     private readonly string _clientId;
+    private readonly string _clientSecret;
     private readonly string _whiteListUrl;
 
-    public PatreonApiHandler(int[] ports, string clientId)
-        : this(ports, clientId, null)
+    public PatreonApiHandler(int[] ports, string clientId, string clientSecret)
+        : this(ports, clientId, clientSecret, null)
     {
     }
 
-    public PatreonApiHandler(int[] ports, string clientId, string whiteListUrl)
+    public PatreonApiHandler(int[] ports, string clientId, string clientSecret, string whiteListUrl)
     {
         _ports = ports;
         _clientId = clientId;
+        _clientSecret = clientSecret;
         _whiteListUrl = whiteListUrl;
         _client = new HttpClient();
     }
@@ -162,7 +164,7 @@ internal class PatreonApiHandler : IDisposable
             new KeyValuePair<string, string>("code", code),
             new KeyValuePair<string, string>("redirect_uri", redirectUrl),
             new KeyValuePair<string, string>("client_id", _clientId),
-            new KeyValuePair<string, string>("client_secret", "invalid"),
+            new KeyValuePair<string, string>("client_secret", _clientSecret),
         };
 
         using var content = new FormUrlEncodedContent(values);
@@ -190,6 +192,7 @@ internal class PatreonApiHandler : IDisposable
             new KeyValuePair<string, string>("grant_type", "refresh_token"),
             new KeyValuePair<string, string>("refresh_token", refreshToken),
             new KeyValuePair<string, string>("client_id", _clientId),
+            new KeyValuePair<string, string>("client_secret", _clientSecret),
         };
 
         using var content = new FormUrlEncodedContent(values);
