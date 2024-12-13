@@ -71,7 +71,7 @@ public class PatreonService
     }
 
     private PatreonApiHandler CreateService()
-        => new(_credential.Ports, _credential.ClientId, _credential.WhiteListUrl);
+        => new(_credential.Ports, _credential.ClientId, _credential.ClientSecret, _credential.WhiteListUrl);
 
     #endregion
 }

@@ -6,5 +6,7 @@ public class PatreonApiCredential
 
     public string ClientId { get; set; }
 
+    public string ClientSecret { get; set; }
+
     public string WhiteListUrl { get; set; }
 }
