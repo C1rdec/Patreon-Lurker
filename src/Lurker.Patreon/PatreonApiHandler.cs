@@ -12,6 +12,10 @@ internal class PatreonApiHandler : IDisposable
 {
     public static readonly string DefaultSuccessHtml = "<body style='background-color: dimgray;'><div style='text-align: center;color: lightgray;'><h1>Happy lurking</h1><span>You can close this window</span><div></body>";
 
+    private const string AuthorizationUrl = "https://www.patreon.com/oauth2/authorize";
+    private const string TokenUrl = "https://www.patreon.com/api/oauth2/token";
+    private const string IdentityUrl = "https://www.patreon.com/api/oauth2/v2/identity?include=memberships&fields%5Bmember%5D=patron_status";
+
     private readonly HttpClient _client;
     private readonly int[] _ports;
     private readonly string _clientId;
@@ -61,9 +65,10 @@ internal class PatreonApiHandler : IDisposable
             http.Start();
 
             var state = Guid.NewGuid();
+            var encodedRedirectUrl = Uri.EscapeDataString(redirectUrl);
             Process.Start(new ProcessStartInfo
             {
-                FileName = $"https://www.patreon.com/oauth2/authorize?response_type=code&client_id={_clientId}&redirect_uri={redirectUrl}&state={state}",
+                FileName = $"{AuthorizationUrl}?response_type=code&client_id={_clientId}&redirect_uri={encodedRedirectUrl}&scope=identity%20identity.memberships&state={state}",
                 UseShellExecute = true
             });
 
@@ -93,7 +98,7 @@ internal class PatreonApiHandler : IDisposable
 
     public async Task<bool> IsPledging(string campaignId, string token)
     {
-        var json = await Get("https://www.patreon.com/api/oauth2/api/current_user", token);
+        var json = await Get(IdentityUrl, token);
         if (string.IsNullOrEmpty(json))
         {
             return false;
@@ -102,10 +107,19 @@ internal class PatreonApiHandler : IDisposable
         var document = JsonDocument.Parse(json);
         if (document.RootElement.TryGetProperty("included", out var included))
         {
-            var isPatron =  included.EnumerateArray().Any(e => e.GetProperty("type").GetString() == "campaign" && e.GetProperty("id").GetString() == campaignId);
+            var isPatron = included.EnumerateArray().Any(member =>
+                member.GetProperty("type").GetString() == "member"
+                && member.TryGetProperty("attributes", out var attributes)
+                && attributes.TryGetProperty("patron_status", out var patronStatus)
+                && patronStatus.GetString() == "active_patron"
+                && member.TryGetProperty("relationships", out var relationships)
+                && relationships.TryGetProperty("campaign", out var campaign)
+                && campaign.TryGetProperty("data", out var campaignData)
+                && campaignData.GetProperty("id").GetString() == campaignId);
+
             if (isPatron)
             {
-                return isPatron;
+                return true;
             }
         }
 
@@ -123,10 +137,10 @@ internal class PatreonApiHandler : IDisposable
 
     public async Task<string> GetPatronId(string token)
     {
-        var json = await Get("https://www.patreon.com/api/oauth2/api/current_user", token);
+        var json = await Get(IdentityUrl, token);
         if (string.IsNullOrEmpty(json))
         {
-            return string.Empty;    
+            return string.Empty;
         }
 
         var document = JsonDocument.Parse(json);
@@ -157,7 +171,7 @@ internal class PatreonApiHandler : IDisposable
 
     private async Task<TokenResult> GetTokenResultAsync(string code, string redirectUrl)
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, "https://www.patreon.com/api/oauth2/token");
+        var request = new HttpRequestMessage(HttpMethod.Post, TokenUrl);
         var values = new[]
         {
             new KeyValuePair<string, string>("grant_type", "authorization_code"),
@@ -184,7 +198,7 @@ internal class PatreonApiHandler : IDisposable
 
     private async Task<TokenResult> RefreshTokens(string refreshToken)
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, "https://www.patreon.com/api/oauth2/token");
+        var request = new HttpRequestMessage(HttpMethod.Post, TokenUrl);
 
         // Body
         var values = new[]

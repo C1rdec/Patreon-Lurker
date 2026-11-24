@@ -54,6 +54,10 @@ public class PatreonService
         }
 
         _patreonId = await service.GetPatronId(accessToken);
+        if (string.IsNullOrEmpty(_patreonId))
+        {
+            LogOut();
+        }
     }
 
     public async Task<bool> CheckPledgeStatusAsync(string campaignId)
@@ -66,6 +70,11 @@ public class PatreonService
         using var service = CreateService();
         _isPledged = await service.IsPledging(campaignId, _patreonFile.Entity.AccessToken);
         _patreonId = await service.GetPatronId(_patreonFile.Entity.AccessToken);
+        if (string.IsNullOrEmpty(_patreonId))
+        {
+            LogOut();
+            return false;
+        }
 
         return _isPledged;
     }
